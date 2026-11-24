@@ -67,6 +67,12 @@ export interface LibraryData {
 
 export type ImportMode = 'merge' | 'replace';
 
+export interface ImportLibraryResult {
+  library: LibraryData;
+  importedSongCount: number;
+  totalSongCount: number;
+}
+
 export interface AppInfo {
   version: string;
   dataDir: string;

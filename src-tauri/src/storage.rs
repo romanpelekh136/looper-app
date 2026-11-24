@@ -15,6 +15,8 @@ pub enum StorageError {
     Json(#[from] serde_json::Error),
     #[error("Could not resolve %APPDATA% directory")]
     DataDirUnavailable,
+    #[error("Invalid backup file: {0}")]
+    InvalidBackup(String),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -195,10 +197,110 @@ pub enum ImportMode {
     Replace,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportLibraryResult {
+    pub library: LibraryData,
+    pub imported_song_count: usize,
+    pub total_song_count: usize,
+}
+
 pub fn app_data_dir() -> Result<PathBuf, StorageError> {
     dirs::config_dir()
         .map(|base| base.join("GuitarLooper"))
         .ok_or(StorageError::DataDirUnavailable)
+}
+
+pub fn library_path(data_dir: &Path) -> PathBuf {
+    data_dir.join("library.json")
+}
+
+pub fn settings_path(data_dir: &Path) -> PathBuf {
+    data_dir.join("settings.json")
+}
+
+pub fn load_library(data_dir: &Path) -> Result<LibraryData, StorageError> {
+    let mut lib: LibraryData = read_json_or_default(&library_path(data_dir))?;
+    lib.schema_version = 1;
+    Ok(lib)
+}
+
+pub fn save_library(data_dir: &Path, library: &LibraryData) -> Result<(), StorageError> {
+    let mut normalized = library.clone();
+    normalized.schema_version = 1;
+    atomic_write_json(&library_path(data_dir), &normalized)
+}
+
+pub fn normalize_settings(mut settings: AppSettings) -> AppSettings {
+    settings.schema_version = 1;
+    settings.volume = if settings.volume.is_finite() {
+        settings.volume.clamp(0.0, 1.0)
+    } else {
+        1.0
+    };
+
+    let defaults = AppSettings::default();
+    for (action, key) in defaults.local_hotkeys {
+        settings.local_hotkeys.entry(action).or_insert(key);
+    }
+    for (action, key) in defaults.global_hotkeys {
+        settings.global_hotkeys.entry(action).or_insert(key);
+    }
+
+    settings
+}
+
+pub fn load_settings(data_dir: &Path) -> Result<AppSettings, StorageError> {
+    let loaded: AppSettings = read_json_or_default(&settings_path(data_dir))?;
+    Ok(normalize_settings(loaded))
+}
+
+pub fn save_settings(data_dir: &Path, settings: &AppSettings) -> Result<(), StorageError> {
+    let normalized = normalize_settings(settings.clone());
+    atomic_write_json(&settings_path(data_dir), &normalized)
+}
+
+pub fn export_library_to_file(data_dir: &Path, target_path: &Path) -> Result<usize, StorageError> {
+    let library = load_library(data_dir)?;
+    let count = library.songs.len();
+    atomic_write_json(target_path, &library)?;
+    Ok(count)
+}
+
+pub fn import_library_from_file(
+    data_dir: &Path,
+    source_path: &Path,
+    mode: ImportMode,
+) -> Result<ImportLibraryResult, StorageError> {
+    let bytes = fs::read(source_path)?;
+    let incoming: LibraryData = serde_json::from_slice(&bytes)?;
+
+    if incoming.schema_version != 1 {
+        return Err(StorageError::InvalidBackup(format!(
+            "Unsupported schemaVersion: {}",
+            incoming.schema_version
+        )));
+    }
+
+    for song in &incoming.songs {
+        if song.youtube_id.trim().is_empty() || song.title.trim().is_empty() {
+            return Err(StorageError::InvalidBackup(
+                "Each song must have non-empty youtubeId and title".to_string(),
+            ));
+        }
+    }
+
+    let imported_song_count = incoming.songs.len();
+    let existing = load_library(data_dir)?;
+    let merged = import_library(existing, incoming, mode);
+    save_library(data_dir, &merged)?;
+
+    let total_song_count = merged.songs.len();
+    Ok(ImportLibraryResult {
+        library: merged,
+        imported_song_count,
+        total_song_count,
+    })
 }
 
 /// Atomically writes serialized JSON via a sibling temporary file + fsync + rename.
@@ -428,5 +530,109 @@ mod tests {
 
         let replaced = import_library(existing, incoming.clone(), ImportMode::Replace);
         assert_eq!(replaced, incoming);
+    }
+
+    #[test]
+    fn load_settings_backfills_missing_hotkeys_and_clamps_volume() {
+        let dir = tempdir().unwrap();
+        let path = settings_path(dir.path());
+
+        let partial = serde_json::json!({
+            "schemaVersion": 1,
+            "videoQuality": "1080p",
+            "globalHotkeysEnabled": true,
+            "localHotkeys": {
+                "togglePlay": "K"
+            },
+            "globalHotkeys": {},
+            "volume": 2.5
+        });
+        atomic_write_json(&path, &partial).unwrap();
+
+        let loaded = load_settings(dir.path()).unwrap();
+        assert_eq!(loaded.volume, 1.0);
+        assert_eq!(loaded.video_quality, VideoQuality::Q1080p);
+        assert_eq!(
+            loaded.local_hotkeys.get(&HotkeyAction::TogglePlay).map(String::as_str),
+            Some("K")
+        );
+        assert_eq!(
+            loaded
+                .local_hotkeys
+                .get(&HotkeyAction::ToggleMetronome)
+                .map(String::as_str),
+            Some("M")
+        );
+        assert_eq!(
+            loaded
+                .global_hotkeys
+                .get(&HotkeyAction::ToggleMetronome)
+                .map(String::as_str),
+            Some("Ctrl+Alt+M")
+        );
+    }
+
+    #[test]
+    fn export_and_import_library_file_merge_and_replace() {
+        let dir = tempdir().unwrap();
+        let data_dir = dir.path().join("app");
+        let backup_path = dir.path().join("backup.json");
+
+        let initial = LibraryData {
+            schema_version: 1,
+            songs: vec![sample_song(
+                "vidA1234567",
+                "Song A",
+                vec![sample_loop("l1", "Intro", 0.0, 10.0)],
+            )],
+        };
+        save_library(&data_dir, &initial).unwrap();
+
+        let exported_count = export_library_to_file(&data_dir, &backup_path).unwrap();
+        assert_eq!(exported_count, 1);
+
+        // Write a different backup with one overlapping song + one new song
+        let incoming_backup = LibraryData {
+            schema_version: 1,
+            songs: vec![
+                sample_song(
+                    "vidA1234567",
+                    "Song A Updated",
+                    vec![sample_loop("l2", "Chorus", 20.0, 35.0)],
+                ),
+                sample_song("vidC1234567", "Song C", vec![]),
+            ],
+        };
+        atomic_write_json(&backup_path, &incoming_backup).unwrap();
+
+        let merge_res =
+            import_library_from_file(&data_dir, &backup_path, ImportMode::Merge).unwrap();
+        assert_eq!(merge_res.imported_song_count, 2);
+        assert_eq!(merge_res.total_song_count, 2);
+        assert_eq!(merge_res.library.songs[0].loops.len(), 2);
+
+        // Invalid backup schemaVersion must fail and keep existing library intact
+        let bad_backup = dir.path().join("bad_backup.json");
+        atomic_write_json(
+            &bad_backup,
+            &serde_json::json!({ "schemaVersion": 99, "songs": [] }),
+        )
+        .unwrap();
+        let err = import_library_from_file(&data_dir, &bad_backup, ImportMode::Replace)
+            .unwrap_err();
+        assert!(matches!(err, StorageError::InvalidBackup(_)));
+        assert_eq!(load_library(&data_dir).unwrap().songs.len(), 2);
+
+        // Replace mode replaces with incoming songs
+        let single_backup = LibraryData {
+            schema_version: 1,
+            songs: vec![sample_song("vidZ1234567", "Only Song Z", vec![])],
+        };
+        atomic_write_json(&backup_path, &single_backup).unwrap();
+        let replace_res =
+            import_library_from_file(&data_dir, &backup_path, ImportMode::Replace).unwrap();
+        assert_eq!(replace_res.imported_song_count, 1);
+        assert_eq!(replace_res.total_song_count, 1);
+        assert_eq!(replace_res.library.songs[0].youtube_id, "vidZ1234567");
     }
 }

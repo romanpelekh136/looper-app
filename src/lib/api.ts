@@ -1,11 +1,16 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+import { open, save } from '@tauri-apps/plugin-dialog';
 import type {
   AppInfo,
+  AppSettings,
   BinariesStatus,
   CacheClearMode,
   CacheStats,
   DownloadProgress,
+  ImportLibraryResult,
+  ImportMode,
+  LibraryData,
   PrepareVideoResult,
   VideoMetadata,
   VideoQuality,
@@ -17,6 +22,58 @@ export function isTauriRuntime(): boolean {
 
 export async function getAppInfo(): Promise<AppInfo> {
   return invoke<AppInfo>('get_app_info');
+}
+
+export async function loadLibrary(): Promise<LibraryData> {
+  return invoke<LibraryData>('load_library');
+}
+
+export async function saveLibrary(library: LibraryData): Promise<void> {
+  return invoke<void>('save_library', { library });
+}
+
+export async function loadSettings(): Promise<AppSettings> {
+  return invoke<AppSettings>('load_settings');
+}
+
+export async function saveSettings(settings: AppSettings): Promise<void> {
+  return invoke<void>('save_settings', { settings });
+}
+
+export async function exportLibraryToPath(targetPath: string): Promise<number> {
+  return invoke<number>('export_library', { targetPath });
+}
+
+export async function importLibraryFromPath(
+  sourcePath: string,
+  mode: ImportMode,
+): Promise<ImportLibraryResult> {
+  return invoke<ImportLibraryResult>('import_library_file', {
+    sourcePath,
+    mode,
+  });
+}
+
+export async function pickExportLibraryPath(): Promise<string | null> {
+  const selected = await save({
+    title: 'Експортувати бібліотеку (JSON)',
+    defaultPath: 'guitar-looper-library.json',
+    filters: [{ name: 'JSON Backup', extensions: ['json'] }],
+  });
+  return selected ?? null;
+}
+
+export async function pickImportLibraryPath(): Promise<string | null> {
+  const selected = await open({
+    title: 'Імпортувати бібліотеку (JSON)',
+    multiple: false,
+    directory: false,
+    filters: [{ name: 'JSON Backup', extensions: ['json'] }],
+  });
+  if (Array.isArray(selected)) {
+    return selected[0] ?? null;
+  }
+  return selected ?? null;
 }
 
 export async function checkBinaries(): Promise<BinariesStatus> {

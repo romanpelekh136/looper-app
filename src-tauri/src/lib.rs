@@ -5,10 +5,11 @@ pub mod ytdlp;
 use media_server::MediaServer;
 use serde::Serialize;
 use std::collections::HashSet;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use storage::{LibraryData, VideoQuality};
+use storage::{AppSettings, ImportLibraryResult, ImportMode, LibraryData, VideoQuality};
 use tauri::{AppHandle, Manager, State};
+use tokio::sync::Mutex;
 use ytdlp::{
     BinariesStatus, CacheClearMode, CacheStats, DownloadManager, PrepareVideoResult,
     VideoMetadata,
@@ -24,12 +25,11 @@ pub struct AppInfo {
 pub struct AppState {
     pub media_server: Arc<MediaServer>,
     pub downloads: DownloadManager,
+    pub storage_lock: Mutex<()>,
 }
 
 fn load_favorite_ids(data_dir: &Path) -> Result<HashSet<String>, String> {
-    let lib_path = data_dir.join("library.json");
-    let lib: LibraryData =
-        storage::read_json_or_default(&lib_path).map_err(|e| e.to_string())?;
+    let lib = storage::load_library(data_dir).map_err(|e| e.to_string())?;
     Ok(lib.songs.into_iter().map(|s| s.youtube_id).collect())
 }
 
@@ -43,6 +43,53 @@ fn get_app_info() -> Result<AppInfo, String> {
         version: env!("CARGO_PKG_VERSION").to_string(),
         data_dir,
     })
+}
+
+#[tauri::command]
+async fn load_library(state: State<'_, AppState>) -> Result<LibraryData, String> {
+    let _guard = state.storage_lock.lock().await;
+    let data_dir = storage::app_data_dir().map_err(|e| e.to_string())?;
+    storage::load_library(&data_dir).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn save_library(state: State<'_, AppState>, library: LibraryData) -> Result<(), String> {
+    let _guard = state.storage_lock.lock().await;
+    let data_dir = storage::app_data_dir().map_err(|e| e.to_string())?;
+    storage::save_library(&data_dir, &library).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn load_settings(state: State<'_, AppState>) -> Result<AppSettings, String> {
+    let _guard = state.storage_lock.lock().await;
+    let data_dir = storage::app_data_dir().map_err(|e| e.to_string())?;
+    storage::load_settings(&data_dir).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn save_settings(state: State<'_, AppState>, settings: AppSettings) -> Result<(), String> {
+    let _guard = state.storage_lock.lock().await;
+    let data_dir = storage::app_data_dir().map_err(|e| e.to_string())?;
+    storage::save_settings(&data_dir, &settings).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn export_library(state: State<'_, AppState>, target_path: String) -> Result<usize, String> {
+    let _guard = state.storage_lock.lock().await;
+    let data_dir = storage::app_data_dir().map_err(|e| e.to_string())?;
+    storage::export_library_to_file(&data_dir, Path::new(&target_path)).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn import_library_file(
+    state: State<'_, AppState>,
+    source_path: String,
+    mode: ImportMode,
+) -> Result<ImportLibraryResult, String> {
+    let _guard = state.storage_lock.lock().await;
+    let data_dir = storage::app_data_dir().map_err(|e| e.to_string())?;
+    storage::import_library_from_file(&data_dir, PathBuf::from(source_path).as_path(), mode)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -131,11 +178,18 @@ pub fn run() {
             app.manage(AppState {
                 media_server: Arc::new(media_server),
                 downloads: DownloadManager::default(),
+                storage_lock: Mutex::new(()),
             });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             get_app_info,
+            load_library,
+            save_library,
+            load_settings,
+            save_settings,
+            export_library,
+            import_library_file,
             check_binaries,
             update_ytdlp,
             fetch_video_metadata,
