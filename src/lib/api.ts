@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/core';
+import { invoke, isTauri } from '@tauri-apps/api/core';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import type {
@@ -17,7 +17,7 @@ import type {
 } from '../types';
 
 export function isTauriRuntime(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+  return isTauri() || (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window);
 }
 
 export async function getAppInfo(): Promise<AppInfo> {
