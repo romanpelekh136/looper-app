@@ -1,0 +1,253 @@
+:root {
+  color-scheme: dark;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background-color: #0f1115;
+  color: #e6e9ef;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background-color: #0f1115;
+  color: #e6e9ef;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background-color: #161920;
+  border-bottom: 1px solid #252a36;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.brand-icon {
+  color: #f59e0b;
+}
+
+.version-badge {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background-color: #232834;
+  color: #9ca3af;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pill-button,
+.icon-button,
+.primary-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #2d3342;
+  background-color: #1e232d;
+  color: #e6e9ef;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.pill-button:hover,
+.icon-button:hover {
+  background-color: #272d3a;
+}
+
+.pill-button.active {
+  border-color: #f59e0b;
+  background-color: rgba(245, 158, 11, 0.14);
+  color: #fbbf24;
+}
+
+.icon-button {
+  padding: 7px 9px;
+}
+
+.primary-button {
+  background-color: #f59e0b;
+  border-color: #f59e0b;
+  color: #111318;
+  font-weight: 600;
+}
+
+.primary-button:hover {
+  background-color: #fbbf24;
+}
+
+.app-body {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  flex: 1;
+  min-height: 0;
+}
+
+.library-sidebar {
+  display: flex;
+  flex-direction: column;
+  background-color: #13161d;
+  border-right: 1px solid #252a36;
+  padding: 16px;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.sidebar-header h2 {
+  margin: 0;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+}
+
+.muted-count {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.sidebar-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #6b7280;
+  font-size: 13px;
+  padding: 16px;
+  border: 1px dashed #252a36;
+  border-radius: 10px;
+}
+
+.workspace-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  overflow-y: auto;
+}
+
+.url-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #161920;
+  border: 1px solid #252a36;
+  border-radius: 10px;
+  padding: 6px 8px 6px 12px;
+}
+
+.url-icon {
+  color: #ef4444;
+  flex-shrink: 0;
+}
+
+.url-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #e6e9ef;
+  font-size: 14px;
+}
+
+.status-banner {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background-color: #1b202b;
+  border: 1px solid #2f3748;
+  font-size: 13px;
+  color: #d1d5db;
+}
+
+.player-stage {
+  flex: 1;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0b0d11;
+  border: 1px solid #252a36;
+  border-radius: 12px;
+}
+
+.player-placeholder {
+  text-align: center;
+  max-width: 460px;
+  padding: 24px;
+  color: #9ca3af;
+}
+
+.placeholder-icon {
+  color: #f59e0b;
+  margin-bottom: 10px;
+}
+
+.player-placeholder h3 {
+  margin: 0 0 8px;
+  color: #e6e9ef;
+  font-size: 17px;
+}
+
+.player-placeholder p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ab-panel {
+  background-color: #161920;
+  border: 1px solid #252a36;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.ab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.mono-time {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: #fbbf24;
+}
+
+.ab-hint {
+  margin: 0;
+  font-size: 13px;
+  color: #9ca3af;
+}

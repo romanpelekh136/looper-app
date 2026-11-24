@@ -1,0 +1,25 @@
+[package]
+name = "guitar-youtube-looper"
+version = "0.1.0"
+description = "Desktop guitar practice looper for YouTube videos"
+authors = ["Guitar Looper"]
+edition = "2021"
+
+[lib]
+name = "guitar_youtube_looper_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-global-shortcut = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+dirs = "6"
+
+[dev-dependencies]
+tempfile = "3"
