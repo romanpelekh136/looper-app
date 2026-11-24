@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run TypeScript typecheck and frontend tests
+        run: |
+          npx tsc --noEmit
+          npm test -- --run
+
+      - name: Run Rust backend tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
+      - name: Build Tauri bundles and create GitHub Release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: 'Guitar YouTube Looper v__VERSION__'
+          releaseBody: |
+            ## Guitar YouTube Looper v__VERSION__ (Windows x64)
+
+            Desktop guitar practice looper for YouTube videos.
+
+            ### Highlights
+            - YouTube download & offline MP4 (H.264/AAC) cache (`480p` / `720p` / `1080p`) via `yt-dlp` + `ffmpeg`
+            - Embedded local HTTP `206 Partial Content` server for instant, seamless `B -> A` looping
+            - Premiere-style magnetic timeline (`0.1s` precision, `±0.1s` / `±0.5s` nudges, manual timecode input)
+            - Pitch-preserving playback speed (`0.25x`–`2.00x`) and built-in Web Audio metronome
+            - Favorites library with search, multiple named loops per song, and JSON Export / Import backup
+
+            ### Notes
+            - **FFmpeg** should be available in `PATH` or placed in `%APPDATA%\GuitarLooper\bin\` for merging high-quality YouTube streams.
+            - Unsigned Windows binaries may trigger a Windows SmartScreen prompt on first launch (*More info -> Run anyway*).
+          releaseDraft: false
+          prerelease: false
+
+      - name: Upload standalone portable executable
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = if ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}" } else {
+            $pkg = Get-Content package.json | ConvertFrom-Json
+            "v$($pkg.version)"
+          }
+          $srcExe = "src-tauri/target/release/guitar-youtube-looper.exe"
+          $portableName = "Guitar-YouTube-Looper-$tag-x64-portable.exe"
+          Copy-Item $srcExe $portableName -Force
+          gh release upload $tag $portableName --clobber
