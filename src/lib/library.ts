@@ -67,7 +67,7 @@ export function createLoopSegment(
 
   return {
     id: generateId('loop'),
-    name: trimmedName || `Луп ${fallbackIndex}`,
+    name: trimmedName || `Loop ${fallbackIndex}`,
     startSec: normalizedStart,
     endSec: normalizedEnd,
     createdAt: nowIso,
@@ -109,12 +109,12 @@ export function getSongLoopEdges(song: Song | null | undefined): number[] {
   return Array.from(edges).sort((a, b) => a - b);
 }
 
-/** Formats a byte count into a human-readable Ukrainian size label. */
+/** Formats a byte count into a human-readable size label. */
 export function formatBytes(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) {
-    return '0 Б';
+    return '0 B';
   }
-  const units = ['Б', 'КБ', 'МБ', 'ГБ', 'ТБ'];
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   let val = bytes;
   let unitIdx = 0;
   while (val >= 1024 && unitIdx < units.length - 1) {
@@ -122,7 +122,7 @@ export function formatBytes(bytes: number): string {
     unitIdx += 1;
   }
   if (unitIdx === 0) {
-    return `${Math.round(val)} Б`;
+    return `${Math.round(val)} B`;
   }
   const decimals = val >= 100 ? 0 : val >= 10 ? 1 : 2;
   return `${val.toFixed(decimals)} ${units[unitIdx]}`;

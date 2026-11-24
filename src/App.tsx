@@ -304,7 +304,7 @@ export function App() {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       if (!message.toLowerCase().includes('cancelled')) {
-        setLoadError(`Помилка завантаження: ${message}`);
+        setLoadError(`Download error: ${message}`);
       }
     } finally {
       if (unlisten) unlisten();
@@ -320,14 +320,14 @@ export function App() {
     const parsed = parseYouTubeUrl(urlInput);
     if (!parsed) {
       setLoadError(
-        'Невалідне посилання YouTube. Підтримуються youtube.com/watch?v=..., youtu.be/... та shorts/.',
+        'Invalid YouTube URL. Supported formats: youtube.com/watch?v=..., youtu.be/..., and shorts/.',
       );
       return;
     }
 
     if (!inTauri) {
       setLoadError(
-        `Розпізнано ID "${parsed.videoId}". Завантаження працює у десктопному вікні Tauri (npm.cmd run tauri dev).`,
+        `Detected ID "${parsed.videoId}". Downloading works in the Tauri desktop window (npm.cmd run tauri dev).`,
       );
       return;
     }
@@ -362,7 +362,7 @@ export function App() {
       } else {
         const message = err instanceof Error ? err.message : String(err);
         if (!message.toLowerCase().includes('cancelled')) {
-          setLoadError(`Помилка завантаження: ${message}`);
+          setLoadError(`Download error: ${message}`);
         }
         setIsLoading(false);
         setProgress(null);
@@ -388,7 +388,7 @@ export function App() {
 
     if (!inTauri) {
       setLoadError(
-        `Обрано «${song.title}». Відтворення кешованого MP4 працює у десктопному вікні Tauri.`,
+        `Selected "${song.title}". Cached MP4 playback runs in the Tauri desktop window.`,
       );
       return;
     }
@@ -516,12 +516,12 @@ export function App() {
     const outcome = await exportBackup();
     if (outcome.cancelled) return;
     if (outcome.error) {
-      setBackupNotice({ kind: 'error', text: `Помилка експорту: ${outcome.error}` });
+      setBackupNotice({ kind: 'error', text: `Export error: ${outcome.error}` });
       return;
     }
     setBackupNotice({
       kind: 'ok',
-      text: `Експортовано пісень: ${outcome.count ?? 0}.`,
+      text: `Exported ${outcome.count ?? 0} song(s).`,
     });
   };
 
@@ -530,20 +530,20 @@ export function App() {
     const outcome = await importBackup(mode);
     if (outcome.cancelled) return;
     if (outcome.error) {
-      setBackupNotice({ kind: 'error', text: `Помилка імпорту: ${outcome.error}` });
+      setBackupNotice({ kind: 'error', text: `Import error: ${outcome.error}` });
       return;
     }
     if (outcome.result) {
       setBackupNotice({
         kind: 'ok',
-        text: `Імпортовано пісень: ${outcome.result.importedSongCount}. Усього в бібліотеці: ${outcome.result.totalSongCount}.`,
+        text: `Imported ${outcome.result.importedSongCount} song(s). Total in library: ${outcome.result.totalSongCount}.`,
       });
     }
   };
 
   const handleExportFromSidebar = () => {
     void handleExportBackup().then(() => {
-      // Surface notice inside Settings if export failed or succeeded
+      // Notice banner is surfaced automatically when SettingsModal is closed
     });
   };
 
@@ -555,7 +555,7 @@ export function App() {
       setLoadError(null);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      setLoadError(`Не вдалося оновити yt-dlp: ${msg}`);
+      setLoadError(`Failed to update yt-dlp: ${msg}`);
     } finally {
       setIsUpdatingYtdlp(false);
     }
@@ -600,7 +600,7 @@ export function App() {
             className="top-url-input"
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
-            placeholder="YouTube URL (watch?v=... або youtu.be/...)"
+            placeholder="YouTube URL (watch?v=... or youtu.be/...)"
             aria-label="YouTube URL"
           />
           <button
@@ -608,7 +608,7 @@ export function App() {
             className="studio-btn is-primary"
             disabled={isLoading}
           >
-            {isLoading ? 'Завантаження…' : 'Відкрити'}
+            {isLoading ? 'Loading…' : 'Open'}
           </button>
         </form>
 
@@ -631,8 +631,8 @@ export function App() {
               e.currentTarget.blur();
               openSettings(null);
             }}
-            title="Налаштування, якість відео, кеш та бекап"
-            aria-label="Налаштування"
+            title="Settings, video quality, cache, and backup"
+            aria-label="Settings"
           >
             <Settings size={14} />
           </button>
@@ -641,12 +641,12 @@ export function App() {
 
       {libraryError && (
         <div className="app-banner-error" role="alert">
-          <span>Помилка бібліотеки: {libraryError}</span>
+          <span>Library error: {libraryError}</span>
           <button
             type="button"
             className="icon-ghost-btn"
             onClick={clearLibraryError}
-            aria-label="Приховати помилку"
+            aria-label="Dismiss error"
           >
             <X size={13} />
           </button>
@@ -665,7 +665,7 @@ export function App() {
             type="button"
             className="icon-ghost-btn"
             onClick={() => setBackupNotice(null)}
-            aria-label="Приховати сповіщення"
+            aria-label="Dismiss notice"
           >
             <X size={13} />
           </button>
@@ -784,13 +784,13 @@ export function App() {
           >
             <div className="modal-header">
               <h2 id="delete-song-title" className="modal-title">
-                Видалити пісню з улюблених?
+                Delete song from favorites?
               </h2>
               <button
                 type="button"
                 className="icon-ghost-btn"
                 onClick={() => setDeleteTarget(null)}
-                aria-label="Закрити"
+                aria-label="Close"
               >
                 <X size={15} />
               </button>
@@ -798,8 +798,9 @@ export function App() {
 
             <div className="modal-body">
               <p className="confirm-text">
-                Пісня <strong>«{deleteTarget.title}»</strong> та її збережені лупи (
-                {deleteTarget.loops.length}) будуть видалені з бібліотеки.
+                <strong>&ldquo;{deleteTarget.title}&rdquo;</strong> and its saved
+                loops ({deleteTarget.loops.length}) will be removed from the
+                library.
               </p>
 
               {cachedVideoIdSet.has(deleteTarget.youtubeId) && (
@@ -809,7 +810,7 @@ export function App() {
                     checked={deleteWithCache}
                     onChange={(e) => setDeleteWithCache(e.target.checked)}
                   />
-                  <span>Також видалити кешований відеофайл із диска</span>
+                  <span>Also delete the cached video file from disk</span>
                 </label>
               )}
 
@@ -819,7 +820,7 @@ export function App() {
                   className="studio-btn"
                   onClick={() => setDeleteTarget(null)}
                 >
-                  Скасувати
+                  Cancel
                 </button>
                 <button
                   type="button"
@@ -827,7 +828,7 @@ export function App() {
                   onClick={() => void confirmDeleteSong()}
                 >
                   <Trash2 size={13} />
-                  <span>Видалити</span>
+                  <span>Delete</span>
                 </button>
               </div>
             </div>

@@ -61,11 +61,11 @@ export function LoopsPanel({
   };
 
   return (
-    <section className="loops-dock" aria-label="Збережені A–B лупи">
+    <section className="loops-dock" aria-label="Saved A–B loops">
       <div className="loops-dock-header">
         <div className="loops-dock-title">
           <Repeat size={13} />
-          <span>Збережені лупи</span>
+          <span>Saved Loops</span>
           <span className="mono-num pane-count">{loops.length}</span>
         </div>
 
@@ -76,18 +76,18 @@ export function LoopsPanel({
             value={newLoopName}
             disabled={!canCreate}
             onChange={(e) => setNewLoopName(e.target.value)}
-            placeholder="Назва лупу (напр. Соло 1)"
-            aria-label="Назва нового лупу"
+            placeholder="Loop name (e.g. Solo 1)"
+            aria-label="New loop name"
           />
           <button
             type="submit"
             className="studio-btn is-primary"
             disabled={!canCreate}
             onClick={(e) => e.currentTarget.blur()}
-            title="Зберегти поточний діапазон A–B як іменований луп"
+            title="Save current A–B range as a named loop"
           >
             <Plus size={13} />
-            <span>Зберегти A–B</span>
+            <span>Save A–B</span>
           </button>
         </form>
       </div>
@@ -95,12 +95,12 @@ export function LoopsPanel({
       <div className="loops-dock-body">
         {!hasVideo ? (
           <p className="loops-empty-hint">
-            Відкрийте відео, щоб створювати іменовані A–B лупи.
+            Open a video to create named A–B loops.
           </p>
         ) : loops.length === 0 ? (
           <p className="loops-empty-hint">
-            Налаштуйте межі In (A) / Out (B) на таймлайні та збережіть перший
-            луп.
+            Set In (A) / Out (B) bounds on the timeline and save your first
+            loop.
           </p>
         ) : (
           <div className="loops-chip-list">
@@ -134,7 +134,7 @@ export function LoopsPanel({
                           cancelRename();
                         }
                       }}
-                      aria-label="Нова назва лупу"
+                      aria-label="New loop name"
                     />
                   ) : (
                     <button
@@ -144,7 +144,7 @@ export function LoopsPanel({
                         e.currentTarget.blur();
                         onApplyLoop(loop);
                       }}
-                      title={`Застосувати «${loop.name}» (${formatTime(loop.startSec)} – ${formatTime(loop.endSec)})`}
+                      title={`Apply "${loop.name}" (${formatTime(loop.startSec)} – ${formatTime(loop.endSec)})`}
                     >
                       <span className="loop-chip-name">{loop.name}</span>
                       <span className="loop-chip-range mono-num">
@@ -162,8 +162,8 @@ export function LoopsPanel({
                         e.currentTarget.blur();
                         onUpdateLoopBounds(loop.id);
                       }}
-                      title="Оновити межі A–B цього лупу"
-                      aria-label="Оновити межі лупу"
+                      title="Update A–B bounds for this loop"
+                      aria-label="Update loop bounds"
                     >
                       <RefreshCw size={11} />
                     </button>
@@ -175,8 +175,8 @@ export function LoopsPanel({
                         e.currentTarget.blur();
                         startRename(loop);
                       }}
-                      title="Перейменувати луп"
-                      aria-label="Перейменувати луп"
+                      title="Rename loop"
+                      aria-label="Rename loop"
                     >
                       <Pencil size={11} />
                     </button>
@@ -188,8 +188,8 @@ export function LoopsPanel({
                         e.currentTarget.blur();
                         onDeleteLoop(loop.id);
                       }}
-                      title="Видалити луп"
-                      aria-label="Видалити луп"
+                      title="Delete loop"
+                      aria-label="Delete loop"
                     >
                       <Trash2 size={11} />
                     </button>

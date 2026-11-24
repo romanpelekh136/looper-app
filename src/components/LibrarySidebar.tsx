@@ -92,7 +92,7 @@ export function LibrarySidebar({
   return (
     <aside className="library-pane">
       <div className="pane-header">
-        <span>Бібліотека</span>
+        <span>Library</span>
         <span className="mono-num pane-count">{countLabel}</span>
       </div>
 
@@ -103,8 +103,8 @@ export function LibrarySidebar({
           className="library-search-input"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Пошук пісні або каналу…"
-          aria-label="Пошук у бібліотеці"
+          placeholder="Search song or channel…"
+          aria-label="Search library"
         />
         {searchQuery && (
           <button
@@ -114,8 +114,8 @@ export function LibrarySidebar({
               e.currentTarget.blur();
               setSearchQuery('');
             }}
-            title="Очистити пошук"
-            aria-label="Очистити пошук"
+            title="Clear search"
+            aria-label="Clear search"
           >
             <X size={12} />
           </button>
@@ -126,13 +126,13 @@ export function LibrarySidebar({
         {songs.length === 0 ? (
           <div className="pane-empty">
             <p>
-              Ще немає улюблених пісень. Відкрийте відео та натисніть «Зберегти в
-              улюблені».
+              No favorite songs yet. Open a video and click &ldquo;Save to
+              Favorites&rdquo;.
             </p>
           </div>
         ) : filteredSongs.length === 0 ? (
           <div className="pane-empty library-empty-search">
-            <p>Нічого не знайдено за запитом «{searchQuery.trim()}».</p>
+            <p>No matches found for &ldquo;{searchQuery.trim()}&rdquo;.</p>
             <button
               type="button"
               className="micro-btn"
@@ -141,7 +141,7 @@ export function LibrarySidebar({
                 setSearchQuery('');
               }}
             >
-              Скинути пошук
+              Reset search
             </button>
           </div>
         ) : (
@@ -192,7 +192,7 @@ export function LibrarySidebar({
                           cancelEditing();
                         }
                       }}
-                      aria-label="Нова назва пісні"
+                      aria-label="New song title"
                     />
                   ) : (
                     <div className="song-item-title">{song.title}</div>
@@ -201,7 +201,7 @@ export function LibrarySidebar({
                   <div className="song-item-channel">{song.channel}</div>
 
                   <div className="song-item-meta mono-num">
-                    <span className="song-meta-chip" title="Кількість лупів">
+                    <span className="song-meta-chip" title="Number of loops">
                       <Repeat size={10} />
                       {song.loops.length}
                     </span>
@@ -213,10 +213,10 @@ export function LibrarySidebar({
                     {isCached && (
                       <span
                         className="song-meta-chip is-offline"
-                        title="Відео збережено локально — працює офлайн"
+                        title="Video is cached locally — available offline"
                       >
                         <HardDrive size={10} />
-                        Офлайн
+                        Offline
                       </span>
                     )}
                   </div>
@@ -231,8 +231,8 @@ export function LibrarySidebar({
                       e.currentTarget.blur();
                       startEditing(song);
                     }}
-                    title="Перейменувати пісню"
-                    aria-label="Перейменувати пісню"
+                    title="Rename song"
+                    aria-label="Rename song"
                   >
                     <Pencil size={12} />
                   </button>
@@ -244,8 +244,8 @@ export function LibrarySidebar({
                       e.currentTarget.blur();
                       onRequestDeleteSong(song);
                     }}
-                    title="Видалити пісню"
-                    aria-label="Видалити пісню"
+                    title="Delete song"
+                    aria-label="Delete song"
                   >
                     <Trash2 size={12} />
                   </button>
@@ -264,10 +264,10 @@ export function LibrarySidebar({
             e.currentTarget.blur();
             onExport();
           }}
-          title="Експортувати бібліотеку в JSON"
+          title="Export library to JSON"
         >
           <Download size={12} />
-          <span>Експорт</span>
+          <span>Export</span>
         </button>
         <button
           type="button"
@@ -276,10 +276,10 @@ export function LibrarySidebar({
             e.currentTarget.blur();
             onOpenImport();
           }}
-          title="Імпортувати бібліотеку з JSON"
+          title="Import library from JSON"
         >
           <Upload size={12} />
-          <span>Імпорт</span>
+          <span>Import</span>
         </button>
       </div>
     </aside>

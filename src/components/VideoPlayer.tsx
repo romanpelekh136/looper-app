@@ -56,14 +56,14 @@ const SPEED_PRESETS = [0.5, 0.75, 0.85, 1.0, 1.25];
 function stageLabel(stage?: string): string {
   switch (stage) {
     case 'installing_ytdlp':
-      return 'Завантаження yt-dlp.exe…';
+      return 'Downloading yt-dlp.exe…';
     case 'merging':
-      return "Об'єднання відео та аудіо…";
+      return 'Merging video and audio…';
     case 'ready':
-      return 'Готово';
+      return 'Ready';
     case 'downloading':
     default:
-      return 'Завантаження відео…';
+      return 'Downloading video…';
   }
 }
 
@@ -140,9 +140,9 @@ export function VideoPlayer({
           </div>
           <div className="monitor-meta-right">
             {isFavorite ? (
-              <span className="fav-badge" title="Пісня збережена в улюблених">
+              <span className="fav-badge" title="Saved in Favorites">
                 <Star size={11} fill="currentColor" />
-                <span>В улюблених</span>
+                <span>In Favorites</span>
               </span>
             ) : editingFavTitle ? (
               <form
@@ -166,16 +166,16 @@ export function VideoPlayer({
                       setDraftFavTitle(metadata.title);
                     }
                   }}
-                  placeholder="Назва в бібліотеці"
-                  aria-label="Назва пісні в улюблених"
+                  placeholder="Title in library"
+                  aria-label="Song title in favorites"
                 />
                 <button
                   type="submit"
                   className="micro-btn is-active"
-                  title="Підтвердити збереження"
+                  title="Confirm save"
                 >
                   <Check size={11} />
-                  <span>Зберегти</span>
+                  <span>Save</span>
                 </button>
                 <button
                   type="button"
@@ -185,7 +185,7 @@ export function VideoPlayer({
                     setEditingFavTitle(false);
                     setDraftFavTitle(metadata.title);
                   }}
-                  title="Скасувати"
+                  title="Cancel"
                 >
                   <X size={11} />
                 </button>
@@ -199,16 +199,16 @@ export function VideoPlayer({
                   setDraftFavTitle(metadata.title);
                   setEditingFavTitle(true);
                 }}
-                title="Зберегти пісню в улюблені з можливістю редагування назви"
+                title="Save song to Favorites with optional custom title"
               >
                 <Star size={11} />
-                <span>Зберегти в улюблені</span>
+                <span>Save to Favorites</span>
               </button>
             )}
 
             <span className="mono-num">
               {quality}
-              {streamUrl && (cached ? ' · Кеш (офлайн)' : ' · Закешовано')}
+              {streamUrl && (cached ? ' · Cached (offline)' : ' · Cached')}
             </span>
           </div>
         </div>
@@ -219,6 +219,7 @@ export function VideoPlayer({
           <video
             ref={videoRef}
             src={streamUrl}
+            poster={metadata?.thumbnailUrl || undefined}
             className="video-element"
             playsInline
             preload="auto"
@@ -231,11 +232,11 @@ export function VideoPlayer({
         ) : (
           <div className="monitor-empty">
             <Music2 size={28} className="monitor-empty-icon" />
-            <p className="monitor-empty-title">Вставте посилання на YouTube у верхній рядок</p>
+            <p className="monitor-empty-title">Paste a YouTube link in the top bar</p>
             <p className="monitor-empty-sub">
-              Локальний MP4-кеш для миттєвих A–B лупів та роботи без інтернету.
-              {!isTauri && ' (Завантажувач працює у вікні Tauri.)'}
-              {isTauri && dataDirHint ? ` Папка: ${dataDirHint}` : ''}
+              Local MP4 cache for instant A–B loops and offline playback.
+              {!isTauri && ' (Downloader runs in the Tauri desktop window.)'}
+              {isTauri && dataDirHint ? ` Folder: ${dataDirHint}` : ''}
             </p>
           </div>
         )}
@@ -257,7 +258,7 @@ export function VideoPlayer({
                   onClick={onCancelDownload}
                 >
                   <X size={13} />
-                  <span>Скасувати</span>
+                  <span>Cancel</span>
                 </button>
               </div>
             </div>
@@ -278,7 +279,7 @@ export function VideoPlayer({
                 }}
               >
                 <RefreshCw size={11} className={isUpdatingYtdlp ? 'spin-icon' : ''} />
-                <span>{isUpdatingYtdlp ? 'Оновлення…' : 'Оновити yt-dlp'}</span>
+                <span>{isUpdatingYtdlp ? 'Updating…' : 'Update yt-dlp'}</span>
               </button>
             )}
           </div>
@@ -308,7 +309,7 @@ export function VideoPlayer({
               onJumpToA();
             }}
             disabled={!streamUrl}
-            title="На початок A"
+            title="Jump to A"
           >
             <SkipBack size={14} />
           </button>
@@ -329,10 +330,10 @@ export function VideoPlayer({
               onToggleLoop();
             }}
             disabled={!streamUrl || durationSec <= 0}
-            title="Увімкнути або вимкнути A–B луп"
+            title="Toggle A–B loop"
           >
             <Repeat size={13} />
-            <span>Луп</span>
+            <span>Loop</span>
           </button>
 
           <div className="speed-presets">
@@ -359,7 +360,7 @@ export function VideoPlayer({
             step={0.05}
             value={playbackRate}
             onChange={(e) => onPlaybackRateChange(clampRate(Number(e.target.value)))}
-            aria-label="Швидкість відтворення"
+            aria-label="Playback speed"
           />
           <span className="mono-num speed-val">{playbackRate.toFixed(2)}x</span>
         </div>
@@ -372,7 +373,7 @@ export function VideoPlayer({
               e.currentTarget.blur();
               onToggleMute();
             }}
-            title={isMuted ? 'Увімкнути звук' : 'Вимкнути звук'}
+            title={isMuted ? 'Unmute' : 'Mute'}
           >
             {isMuted || volume === 0 ? <VolumeX size={14} /> : <Volume2 size={14} />}
           </button>
@@ -385,7 +386,7 @@ export function VideoPlayer({
             step={0.02}
             value={isMuted ? 0 : volume}
             onChange={(e) => onVolumeChange(Number(e.target.value))}
-            aria-label="Гучність відео"
+            aria-label="Video volume"
           />
 
           <button
@@ -396,7 +397,7 @@ export function VideoPlayer({
               handleToggleFullscreen();
             }}
             disabled={!streamUrl}
-            title="Повноекранний режим"
+            title="Fullscreen"
           >
             <Maximize2 size={14} />
           </button>

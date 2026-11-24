@@ -56,7 +56,7 @@ export async function importLibraryFromPath(
 
 export async function pickExportLibraryPath(): Promise<string | null> {
   const selected = await save({
-    title: 'Експортувати бібліотеку (JSON)',
+    title: 'Export Library (JSON)',
     defaultPath: 'guitar-looper-library.json',
     filters: [{ name: 'JSON Backup', extensions: ['json'] }],
   });
@@ -65,7 +65,7 @@ export async function pickExportLibraryPath(): Promise<string | null> {
 
 export async function pickImportLibraryPath(): Promise<string | null> {
   const selected = await open({
-    title: 'Імпортувати бібліотеку (JSON)',
+    title: 'Import Library (JSON)',
     multiple: false,
     directory: false,
     filters: [{ name: 'JSON Backup', extensions: ['json'] }],

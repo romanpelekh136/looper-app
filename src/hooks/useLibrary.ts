@@ -222,7 +222,7 @@ export function useLibrary(inTauri: boolean) {
     if (!inTauri) {
       return {
         cancelled: false,
-        error: 'Експорт JSON доступний у десктопному вікні Tauri.',
+        error: 'JSON export is only available in the Tauri desktop app.',
       };
     }
 
@@ -247,7 +247,7 @@ export function useLibrary(inTauri: boolean) {
       if (!inTauri) {
         return {
           cancelled: false,
-          error: 'Імпорт JSON доступний у десктопному вікні Tauri.',
+          error: 'JSON import is only available in the Tauri desktop app.',
         };
       }
 

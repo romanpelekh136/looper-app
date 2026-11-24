@@ -47,23 +47,23 @@ export function MetronomeControls({
         className={`toolbar-btn ${enabled ? 'is-active' : ''}`}
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
-        title="Мінімальний ручний метроном"
+        title="Manual metronome"
       >
         <Drum size={14} />
-        <span>{enabled ? `${bpm} BPM` : 'Метроном'}</span>
+        <span>{enabled ? `${bpm} BPM` : 'Metronome'}</span>
         {enabled && <span className="status-dot" />}
       </button>
 
       {open && (
-        <div className="metro-popover" role="dialog" aria-label="Метроном">
+        <div className="metro-popover" role="dialog" aria-label="Metronome">
           <div className="popover-row">
-            <span className="popover-label">Метроном</span>
+            <span className="popover-label">Metronome</span>
             <button
               type="button"
               className={`studio-btn ${enabled ? 'is-primary' : ''}`}
               onClick={() => onChange({ enabled: !enabled })}
             >
-              {enabled ? 'Увімкнено' : 'Вимкнено'}
+              {enabled ? 'On' : 'Off'}
             </button>
           </div>
 
@@ -116,7 +116,7 @@ export function MetronomeControls({
           </div>
 
           <div className="popover-row">
-            <span className="popover-label">Гучність</span>
+            <span className="popover-label">Volume</span>
             <input
               type="range"
               className="studio-range"
@@ -125,7 +125,7 @@ export function MetronomeControls({
               step={0.05}
               value={volume}
               onChange={(e) => onChange({ volume: Number(e.target.value) })}
-              aria-label="Гучність метронома"
+              aria-label="Metronome volume"
             />
             <span className="mono-num vol-pct">{Math.round(volume * 100)}%</span>
           </div>

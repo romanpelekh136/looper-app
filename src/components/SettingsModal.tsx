@@ -137,8 +137,8 @@ export function SettingsModal({
       setToolsNotice({
         kind: 'ok',
         text: updated.ytdlpVersion
-          ? `yt-dlp оновлено до версії ${updated.ytdlpVersion}.`
-          : 'yt-dlp успішно оновлено.',
+          ? `yt-dlp updated to ${updated.ytdlpVersion}.`
+          : 'yt-dlp updated successfully.',
       });
       onYtdlpUpdated?.();
     } catch (err) {
@@ -166,13 +166,13 @@ export function SettingsModal({
       >
         <div className="modal-header">
           <h2 id="settings-modal-title" className="modal-title">
-            Налаштування та керування даними
+            Settings &amp; Data Management
           </h2>
           <button
             type="button"
             className="icon-ghost-btn"
             onClick={onClose}
-            aria-label="Закрити"
+            aria-label="Close"
           >
             <X size={15} />
           </button>
@@ -181,8 +181,8 @@ export function SettingsModal({
         <div className="modal-body">
           {/* Section 1: Video Quality */}
           <section className="settings-section">
-            <h3 className="settings-section-title">Якість відео за замовчуванням</h3>
-            <div className="quality-segment" role="group" aria-label="Якість відео">
+            <h3 className="settings-section-title">Default Video Quality</h3>
+            <div className="quality-segment" role="group" aria-label="Video quality">
               {QUALITY_OPTIONS.map((q) => (
                 <button
                   key={q}
@@ -191,13 +191,12 @@ export function SettingsModal({
                   onClick={() => onQualityChange(q)}
                 >
                   {q}
-                  {q === '720p' ? ' (рек.)' : ''}
+                  {q === '720p' ? ' (rec.)' : ''}
                 </button>
               ))}
             </div>
             <p className="settings-hint">
-              Застосовується під час наступного завантаження відео у форматі MP4
-              (H.264 / AAC).
+              Applies to the next downloaded MP4 (H.264 / AAC) video.
             </p>
           </section>
 
@@ -205,30 +204,30 @@ export function SettingsModal({
           <section className="settings-section">
             <h3 className="settings-section-title">
               <HardDrive size={13} />
-              <span>Локальний кеш відео</span>
+              <span>Local Video Cache</span>
             </h3>
 
             <div className="cache-stats-grid">
               <div className="cache-stat-cell">
-                <span className="cache-stat-label">Усього на диску</span>
+                <span className="cache-stat-label">Total on disk</span>
                 <span className="cache-stat-val mono-num">
                   {cacheStats ? formatBytes(cacheStats.totalBytes) : '—'}
                 </span>
               </div>
               <div className="cache-stat-cell">
-                <span className="cache-stat-label">Файлів</span>
+                <span className="cache-stat-label">Files</span>
                 <span className="cache-stat-val mono-num">
                   {cacheStats ? cacheStats.fileCount : '—'}
                 </span>
               </div>
               <div className="cache-stat-cell">
-                <span className="cache-stat-label">Улюблені</span>
+                <span className="cache-stat-label">Favorites</span>
                 <span className="cache-stat-val mono-num">
                   {cacheStats ? formatBytes(cacheStats.favoriteBytes) : '—'}
                 </span>
               </div>
               <div className="cache-stat-cell">
-                <span className="cache-stat-label">Тимчасові</span>
+                <span className="cache-stat-label">Temporary</span>
                 <span className="cache-stat-val mono-num">
                   {cacheStats ? formatBytes(cacheStats.tempBytes) : '—'}
                 </span>
@@ -243,7 +242,7 @@ export function SettingsModal({
                 onClick={() => void handleClear('tempOnly')}
               >
                 <Trash2 size={13} />
-                <span>Очистити тимчасові (неулюблені)</span>
+                <span>Clear Temporary (Non-Favorites)</span>
               </button>
               <button
                 type="button"
@@ -252,18 +251,18 @@ export function SettingsModal({
                 onClick={() => void handleClear('all')}
               >
                 <Trash2 size={13} />
-                <span>Очистити весь кеш</span>
+                <span>Clear All Cache</span>
               </button>
             </div>
             <p className="settings-hint">
-              Улюблені пісні та їхні лупи при очищенні кешу не видаляються — відео
-              перекачається при повторному відкритті.
+              Favorite songs and their loops are never deleted — cached videos
+              will re-download when opened again.
             </p>
           </section>
 
           {/* Section 3: Backup Export / Import */}
           <section ref={backupSectionRef} className="settings-section">
-            <h3 className="settings-section-title">Бекап бібліотеки (JSON)</h3>
+            <h3 className="settings-section-title">Library Backup (JSON)</h3>
 
             <div className="import-mode-group">
               <label className="radio-option">
@@ -274,8 +273,8 @@ export function SettingsModal({
                   onChange={() => setImportMode('merge')}
                 />
                 <span>
-                  <strong>Об&apos;єднати з поточною</strong> — додає нові пісні та
-                  лупи без дублювання за ID
+                  <strong>Merge with current</strong> — adds new songs and loops
+                  without duplicating by ID
                 </span>
               </label>
               <label className="radio-option">
@@ -286,8 +285,8 @@ export function SettingsModal({
                   onChange={() => setImportMode('replace')}
                 />
                 <span>
-                  <strong>Замінити повністю</strong> — перезаписує поточну
-                  бібліотеку файлом бекапу
+                  <strong>Replace completely</strong> — overwrites the current
+                  library with the backup file
                 </span>
               </label>
             </div>
@@ -300,7 +299,7 @@ export function SettingsModal({
                 onClick={() => void handleExport()}
               >
                 <Download size={13} />
-                <span>Експортувати JSON…</span>
+                <span>Export JSON…</span>
               </button>
               <button
                 type="button"
@@ -309,7 +308,7 @@ export function SettingsModal({
                 onClick={() => void handleImport()}
               >
                 <Upload size={13} />
-                <span>Імпортувати JSON…</span>
+                <span>Import JSON…</span>
               </button>
             </div>
 
@@ -328,7 +327,7 @@ export function SettingsModal({
           <section className="settings-section">
             <h3 className="settings-section-title">
               <FolderOpen size={13} />
-              <span>Інструменти та сховище</span>
+              <span>Tools &amp; Storage</span>
             </h3>
 
             <div className="tools-status-list">
@@ -336,21 +335,21 @@ export function SettingsModal({
                 <span className="tools-key">yt-dlp</span>
                 <span className="tools-val mono-num">
                   {binaries?.ytdlpPath
-                    ? `${binaries.ytdlpVersion ?? 'знайдено'} (${binaries.ytdlpPath})`
+                    ? `${binaries.ytdlpVersion ?? 'found'} (${binaries.ytdlpPath})`
                     : inTauri
-                      ? 'завантажиться автоматично при відкритті відео'
-                      : 'доступно у вікні Tauri'}
+                      ? 'will download automatically when opening a video'
+                      : 'available in Tauri window'}
                 </span>
               </div>
               <div className="tools-status-row">
                 <span className="tools-key">ffmpeg</span>
                 <span className="tools-val mono-num">
-                  {binaries?.ffmpegPath ?? (inTauri ? 'не знайдено в PATH/bin' : '—')}
+                  {binaries?.ffmpegPath ?? (inTauri ? 'not found in PATH/bin' : '—')}
                 </span>
               </div>
               {dataDir && (
                 <div className="tools-status-row">
-                  <span className="tools-key">Папка даних</span>
+                  <span className="tools-key">Data folder</span>
                   <span className="tools-val mono-num">{dataDir}</span>
                 </div>
               )}
@@ -364,7 +363,7 @@ export function SettingsModal({
                 onClick={() => void handleUpdateYtdlp()}
               >
                 <RefreshCw size={13} className={isUpdatingYtdlp ? 'spin-icon' : ''} />
-                <span>{isUpdatingYtdlp ? 'Оновлення yt-dlp…' : 'Оновити yt-dlp'}</span>
+                <span>{isUpdatingYtdlp ? 'Updating yt-dlp…' : 'Update yt-dlp'}</span>
               </button>
             </div>
 

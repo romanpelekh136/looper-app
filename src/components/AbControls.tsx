@@ -115,9 +115,9 @@ function BoundInlineEditor({
           e.currentTarget.blur();
           onCommit(roundToTenth(currentTime));
         }}
-        title="Встановити поточну позицію playhead"
+        title="Set to current playhead position"
       >
-        Тут
+        Here
       </button>
 
       <div className="nudge-strip">
@@ -285,10 +285,10 @@ export function AbControls({
               e.currentTarget.blur();
               setMagnetEnabled((prev) => !prev);
             }}
-            title="Магнітне прилипання (утримуйте Alt при перетягуванні щоб тимчасово вимкнути)"
+            title="Magnetic snapping (hold Alt while dragging to bypass)"
           >
             <Magnet size={13} />
-            <span>Магніт</span>
+            <span>Magnet</span>
           </button>
 
           <BoundInlineEditor
@@ -324,7 +324,7 @@ export function AbControls({
 
         <div className="timeline-toolbar-right">
           <span className="mono-num loop-duration-label">
-            Довжина: {loopLen.toFixed(1)} с
+            Length: {loopLen.toFixed(1)} s
           </span>
           <button
             type="button"
@@ -334,10 +334,10 @@ export function AbControls({
               e.currentTarget.blur();
               onResetBounds();
             }}
-            title="Скинути In / Out на весь трек"
+            title="Reset In / Out to full track"
           >
             <RotateCcw size={13} />
-            <span>Скинути</span>
+            <span>Reset</span>
           </button>
         </div>
       </div>
@@ -351,7 +351,7 @@ export function AbControls({
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
         role="group"
-        aria-label="Таймлайн A–B лупу"
+        aria-label="A–B loop timeline"
       >
         {/* Time Ruler */}
         <div className="timeline-ruler">
@@ -399,7 +399,7 @@ export function AbControls({
             onPointerUp={endDrag}
             onPointerCancel={endDrag}
             title={`In (A): ${formatTime(bounds.startSec)}`}
-            aria-label="Маркер A (In)"
+            aria-label="Marker A (In)"
           >
             <span className="bracket-glyph">[</span>
           </button>
@@ -414,7 +414,7 @@ export function AbControls({
             onPointerUp={endDrag}
             onPointerCancel={endDrag}
             title={`Out (B): ${formatTime(bounds.endSec)}`}
-            aria-label="Маркер B (Out)"
+            aria-label="Marker B (Out)"
           >
             <span className="bracket-glyph">]</span>
           </button>

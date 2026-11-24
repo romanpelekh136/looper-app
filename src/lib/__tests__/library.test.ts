@@ -142,11 +142,11 @@ describe('library helpers', () => {
     expect(song.createdAt).toBe('2026-11-24T21:00:00Z');
 
     const loop1 = createLoopSegment('   ', 10.04, 25.06, 185, 2, '2026-11-24T21:05:00Z');
-    expect(loop1.name).toBe('Луп 2');
+    expect(loop1.name).toBe('Loop 2');
     expect(loop1.startSec).toBe(10);
     expect(loop1.endSec).toBe(25.1);
 
-    const loop2 = createLoopSegment('Соло', 25.1, 40.0, 185, 3);
+    const loop2 = createLoopSegment('Solo', 25.1, 40.0, 185, 3);
     let lib: LibraryData = { schemaVersion: 1, songs: [{ ...song, durationSec: 0 }] };
     lib = addLoopToSong(lib, song.id, loop2);
     lib = addLoopToSong(lib, song.id, loop1);
@@ -164,12 +164,12 @@ describe('library helpers', () => {
   });
 
   it('formats byte counts safely', () => {
-    expect(formatBytes(0)).toBe('0 Б');
-    expect(formatBytes(-10)).toBe('0 Б');
-    expect(formatBytes(Number.NaN)).toBe('0 Б');
-    expect(formatBytes(512)).toBe('512 Б');
-    expect(formatBytes(1536)).toBe('1.50 КБ');
-    expect(formatBytes(42.8 * 1024 * 1024)).toBe('42.8 МБ');
-    expect(formatBytes(1.25 * 1024 * 1024 * 1024)).toBe('1.25 ГБ');
+    expect(formatBytes(0)).toBe('0 B');
+    expect(formatBytes(-10)).toBe('0 B');
+    expect(formatBytes(Number.NaN)).toBe('0 B');
+    expect(formatBytes(512)).toBe('512 B');
+    expect(formatBytes(1536)).toBe('1.50 KB');
+    expect(formatBytes(42.8 * 1024 * 1024)).toBe('42.8 MB');
+    expect(formatBytes(1.25 * 1024 * 1024 * 1024)).toBe('1.25 GB');
   });
 });
