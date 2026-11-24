@@ -72,6 +72,46 @@ export interface AppInfo {
   dataDir: string;
 }
 
+export interface BinariesStatus {
+  ytdlpPath: string | null;
+  ytdlpVersion: string | null;
+  ffmpegPath: string | null;
+}
+
+export interface VideoMetadata {
+  youtubeId: string;
+  url: string;
+  title: string;
+  channel: string;
+  durationSec: number;
+  thumbnailUrl: string;
+}
+
+export interface DownloadProgress {
+  videoId: string;
+  quality: VideoQuality;
+  percent: number;
+  stage: string;
+}
+
+export interface PrepareVideoResult {
+  videoId: string;
+  quality: VideoQuality;
+  streamUrl: string;
+  cached: boolean;
+  fileSizeBytes: number;
+}
+
+export interface CacheStats {
+  totalBytes: number;
+  fileCount: number;
+  favoriteBytes: number;
+  tempBytes: number;
+  cachedVideoIds: string[];
+}
+
+export type CacheClearMode = 'tempOnly' | 'all';
+
 export const DEFAULT_METRONOME_CONFIG: MetronomeConfig = {
   enabled: false,
   bpm: 120,
