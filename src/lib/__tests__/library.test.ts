@@ -7,10 +7,17 @@ import {
 } from '../../types';
 import {
   addLoopToSong,
+  createLoopSegment,
+  createSongFromMetadata,
   filterSongs,
+  findSongByYoutubeId,
+  formatBytes,
+  generateId,
+  getSongLoopEdges,
   removeLoopFromSong,
   removeSong,
   renameSong,
+  touchSongLastPlayed,
   updateLoopInSong,
   updateSongMetronome,
   upsertSong,
@@ -112,5 +119,57 @@ describe('library helpers', () => {
     expect(filterSongs(lib.songs, 'sultans').map((s) => s.id)).toEqual(['s1']);
     expect(filterSongs(lib.songs, 'hendrix').map((s) => s.id)).toEqual(['s2']);
     expect(filterSongs(lib.songs, 'nonexistent')).toHaveLength(0);
+  });
+
+  it('creates songs and loops, finds by youtubeId, touches lastPlayedAt, and extracts sorted edges', () => {
+    const id1 = generateId('song');
+    expect(id1.startsWith('song-')).toBe(true);
+
+    const song = createSongFromMetadata(
+      {
+        youtubeId: 'abc12345678',
+        url: 'https://www.youtube.com/watch?v=abc12345678',
+        title: 'Original YT Title',
+        channel: 'Backing Tracks',
+        durationSec: 185,
+        thumbnailUrl: 'https://example.com/t.jpg',
+      },
+      '  My Custom Title  ',
+      '2026-11-24T21:00:00Z',
+    );
+    expect(song.title).toBe('My Custom Title');
+    expect(song.loops).toEqual([]);
+    expect(song.createdAt).toBe('2026-11-24T21:00:00Z');
+
+    const loop1 = createLoopSegment('   ', 10.04, 25.06, 185, 2, '2026-11-24T21:05:00Z');
+    expect(loop1.name).toBe('Луп 2');
+    expect(loop1.startSec).toBe(10);
+    expect(loop1.endSec).toBe(25.1);
+
+    const loop2 = createLoopSegment('Соло', 25.1, 40.0, 185, 3);
+    let lib: LibraryData = { schemaVersion: 1, songs: [{ ...song, durationSec: 0 }] };
+    lib = addLoopToSong(lib, song.id, loop2);
+    lib = addLoopToSong(lib, song.id, loop1);
+
+    const found = findSongByYoutubeId(lib, 'abc12345678');
+    expect(found?.id).toBe(song.id);
+    expect(findSongByYoutubeId(lib, 'missing')).toBeUndefined();
+
+    expect(getSongLoopEdges(found)).toEqual([10, 25.1, 40]);
+    expect(getSongLoopEdges(null)).toEqual([]);
+
+    lib = touchSongLastPlayed(lib, song.id, '2026-11-24T22:00:00Z', 185);
+    expect(lib.songs[0].lastPlayedAt).toBe('2026-11-24T22:00:00Z');
+    expect(lib.songs[0].durationSec).toBe(185);
+  });
+
+  it('formats byte counts safely', () => {
+    expect(formatBytes(0)).toBe('0 Б');
+    expect(formatBytes(-10)).toBe('0 Б');
+    expect(formatBytes(Number.NaN)).toBe('0 Б');
+    expect(formatBytes(512)).toBe('512 Б');
+    expect(formatBytes(1536)).toBe('1.50 КБ');
+    expect(formatBytes(42.8 * 1024 * 1024)).toBe('42.8 МБ');
+    expect(formatBytes(1.25 * 1024 * 1024 * 1024)).toBe('1.25 ГБ');
   });
 });

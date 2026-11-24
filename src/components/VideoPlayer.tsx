@@ -1,11 +1,14 @@
-import { useRef, type RefObject } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import {
+  Check,
   Maximize2,
   Music2,
   Pause,
   Play,
+  RefreshCw,
   Repeat,
   SkipBack,
+  Star,
   Volume2,
   VolumeX,
   X,
@@ -31,6 +34,11 @@ export interface VideoPlayerProps {
   isMuted: boolean;
   isTauri: boolean;
   dataDirHint?: string;
+  isFavorite: boolean;
+  favoriteTitle?: string;
+  onSaveFavorite: (customTitle?: string) => void;
+  onUpdateYtdlp?: () => void;
+  isUpdatingYtdlp?: boolean;
   onTogglePlay: () => void;
   onJumpToA: () => void;
   onToggleLoop: () => void;
@@ -77,6 +85,11 @@ export function VideoPlayer({
   isMuted,
   isTauri,
   dataDirHint,
+  isFavorite,
+  favoriteTitle,
+  onSaveFavorite,
+  onUpdateYtdlp,
+  isUpdatingYtdlp = false,
   onTogglePlay,
   onJumpToA,
   onToggleLoop,
@@ -89,6 +102,13 @@ export function VideoPlayer({
   onEnded,
 }: VideoPlayerProps) {
   const stageRef = useRef<HTMLDivElement>(null);
+  const [editingFavTitle, setEditingFavTitle] = useState(false);
+  const [draftFavTitle, setDraftFavTitle] = useState('');
+
+  useEffect(() => {
+    setEditingFavTitle(false);
+    setDraftFavTitle(metadata?.title ?? '');
+  }, [metadata?.youtubeId, metadata?.title, isFavorite]);
 
   const handleToggleFullscreen = () => {
     const container = stageRef.current;
@@ -104,22 +124,92 @@ export function VideoPlayer({
     Math.min(2.0, Math.max(0.25, Math.round(rate * 20) / 20));
 
   const pct = progress ? Math.min(100, Math.max(0, progress.percent)) : 0;
+  const displayTitle = favoriteTitle || metadata?.title || '';
+  const showYtdlpUpdateBtn =
+    Boolean(isTauri && onUpdateYtdlp && error && error.toLowerCase().includes('yt-dlp'));
 
   return (
     <section className="monitor-panel">
       {metadata && (
         <div className="monitor-meta-bar">
           <div className="monitor-meta-left">
-            <span className="monitor-title" title={metadata.title}>
-              {metadata.title}
+            <span className="monitor-title" title={displayTitle}>
+              {displayTitle}
             </span>
             <span className="monitor-channel">{metadata.channel}</span>
           </div>
-          <div className="monitor-meta-right mono-num">
-            <span>{quality}</span>
-            {streamUrl && (
-              <span>{cached ? '· Кеш (офлайн)' : '· Закешовано'}</span>
+          <div className="monitor-meta-right">
+            {isFavorite ? (
+              <span className="fav-badge" title="Пісня збережена в улюблених">
+                <Star size={11} fill="currentColor" />
+                <span>В улюблених</span>
+              </span>
+            ) : editingFavTitle ? (
+              <form
+                className="fav-inline-form"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  onSaveFavorite(draftFavTitle);
+                  setEditingFavTitle(false);
+                }}
+              >
+                <input
+                  type="text"
+                  className="studio-input fav-title-input"
+                  value={draftFavTitle}
+                  autoFocus
+                  onChange={(e) => setDraftFavTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      e.preventDefault();
+                      setEditingFavTitle(false);
+                      setDraftFavTitle(metadata.title);
+                    }
+                  }}
+                  placeholder="Назва в бібліотеці"
+                  aria-label="Назва пісні в улюблених"
+                />
+                <button
+                  type="submit"
+                  className="micro-btn is-active"
+                  title="Підтвердити збереження"
+                >
+                  <Check size={11} />
+                  <span>Зберегти</span>
+                </button>
+                <button
+                  type="button"
+                  className="micro-btn"
+                  onClick={(e) => {
+                    e.currentTarget.blur();
+                    setEditingFavTitle(false);
+                    setDraftFavTitle(metadata.title);
+                  }}
+                  title="Скасувати"
+                >
+                  <X size={11} />
+                </button>
+              </form>
+            ) : (
+              <button
+                type="button"
+                className="micro-btn"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setDraftFavTitle(metadata.title);
+                  setEditingFavTitle(true);
+                }}
+                title="Зберегти пісню в улюблені з можливістю редагування назви"
+              >
+                <Star size={11} />
+                <span>Зберегти в улюблені</span>
+              </button>
             )}
+
+            <span className="mono-num">
+              {quality}
+              {streamUrl && (cached ? ' · Кеш (офлайн)' : ' · Закешовано')}
+            </span>
           </div>
         </div>
       )}
@@ -176,7 +266,21 @@ export function VideoPlayer({
 
         {error && !isLoading && (
           <div className="monitor-error" role="alert">
-            {error}
+            <span>{error}</span>
+            {showYtdlpUpdateBtn && (
+              <button
+                type="button"
+                className="micro-btn"
+                disabled={isUpdatingYtdlp}
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  onUpdateYtdlp?.();
+                }}
+              >
+                <RefreshCw size={11} className={isUpdatingYtdlp ? 'spin-icon' : ''} />
+                <span>{isUpdatingYtdlp ? 'Оновлення…' : 'Оновити yt-dlp'}</span>
+              </button>
+            )}
           </div>
         )}
       </div>
