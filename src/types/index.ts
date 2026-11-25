@@ -118,6 +118,13 @@ export interface CacheStats {
 
 export type CacheClearMode = 'tempOnly' | 'all';
 
+export interface WaveformData {
+  videoId: string;
+  bins: number;
+  peaks: number[];
+  rms: number[];
+}
+
 export const DEFAULT_METRONOME_CONFIG: MetronomeConfig = {
   enabled: false,
   bpm: 120,

@@ -17,7 +17,9 @@ export interface RulerTick {
   label?: string;
 }
 
-const MAJOR_INTERVALS_SEC = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600];
+const MAJOR_INTERVALS_SEC = [
+  0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600,
+];
 
 export function pixelThresholdToSeconds(
   thresholdPx: number,
@@ -72,6 +74,8 @@ export function snapToTargets(
 export function computeRulerTicks(
   durationSec: number,
   railWidthPx: number,
+  viewStartSec = 0,
+  viewEndSec = durationSec,
 ): RulerTick[] {
   if (
     !Number.isFinite(durationSec) ||
@@ -82,25 +86,46 @@ export function computeRulerTicks(
     return [];
   }
 
+  const safeStart = Math.max(
+    0,
+    Math.min(Number.isFinite(viewStartSec) ? viewStartSec : 0, durationSec),
+  );
+  const safeEnd = Math.max(
+    safeStart,
+    Math.min(Number.isFinite(viewEndSec) ? viewEndSec : durationSec, durationSec),
+  );
+  const visibleSpan = safeEnd - safeStart;
+  if (visibleSpan <= 0) {
+    return [];
+  }
+
   const targetMajorCount = Math.max(2, railWidthPx / 90);
-  const idealInterval = durationSec / targetMajorCount;
+  const idealInterval = visibleSpan / targetMajorCount;
   const majorInterval =
     MAJOR_INTERVALS_SEC.find((iv) => iv >= idealInterval) ??
     MAJOR_INTERVALS_SEC[MAJOR_INTERVALS_SEC.length - 1];
 
-  const subdivisions = majorInterval >= 10 || majorInterval === 5 ? 5 : 4;
+  const subdivisions =
+    majorInterval >= 10 || majorInterval === 5 || majorInterval === 0.5
+      ? 5
+      : majorInterval <= 0.2
+        ? 2
+        : 4;
   const minorStep = majorInterval / subdivisions;
+  const showTenths = majorInterval < 1;
   const ticks: RulerTick[] = [];
-  const totalSteps = Math.floor((durationSec + 1e-9) / minorStep);
 
-  for (let i = 0; i <= totalSteps; i++) {
+  const firstStep = Math.ceil((safeStart - 1e-9) / minorStep);
+  const lastStep = Math.floor((safeEnd + 1e-9) / minorStep);
+
+  for (let i = firstStep; i <= lastStep; i++) {
     const t = Number((i * minorStep).toFixed(4));
-    if (t > durationSec + 1e-6) break;
-    const isMajor = i % subdivisions === 0;
+    if (t < safeStart - 1e-6 || t > safeEnd + 1e-6) continue;
+    const isMajor = ((i % subdivisions) + subdivisions) % subdivisions === 0;
     ticks.push({
-      timeSec: Math.min(t, durationSec),
+      timeSec: Math.min(Math.max(t, 0), durationSec),
       major: isMajor,
-      label: isMajor ? formatTime(t, { showTenths: false }) : undefined,
+      label: isMajor ? formatTime(t, { showTenths }) : undefined,
     });
   }
 

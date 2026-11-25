@@ -14,6 +14,7 @@ import type {
   PrepareVideoResult,
   VideoMetadata,
   VideoQuality,
+  WaveformData,
 } from '../types';
 
 export function isTauriRuntime(): boolean {
@@ -109,6 +110,13 @@ export async function clearCache(mode: CacheClearMode): Promise<CacheStats> {
 
 export async function deleteCachedVideo(videoId: string): Promise<number> {
   return invoke<number>('delete_cached_video', { videoId });
+}
+
+export async function getVideoWaveform(
+  videoId: string,
+  quality: VideoQuality,
+): Promise<WaveformData | null> {
+  return invoke<WaveformData | null>('get_video_waveform', { videoId, quality });
 }
 
 export async function onDownloadProgress(

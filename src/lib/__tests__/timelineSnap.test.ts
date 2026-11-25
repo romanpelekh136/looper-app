@@ -69,4 +69,14 @@ describe('computeRulerTicks', () => {
     expect(computeRulerTicks(0, 600)).toEqual([]);
     expect(computeRulerTicks(100, 0)).toEqual([]);
   });
+
+  it('generates sub-second tenth-formatted labels for zoomed viewport ranges', () => {
+    const zoomed = computeRulerTicks(180, 900, 40, 43);
+    expect(zoomed.length).toBeGreaterThan(5);
+    expect(zoomed.every((t) => t.timeSec >= 40 && t.timeSec <= 43)).toBe(true);
+    const majorLabels = zoomed.filter((t) => t.major).map((t) => t.label);
+    expect(majorLabels).toContain('00:40.0');
+    expect(majorLabels).toContain('00:42.5');
+    expect(computeRulerTicks(180, 900, 50, 50)).toEqual([]);
+  });
 });

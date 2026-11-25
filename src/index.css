@@ -600,6 +600,24 @@ body,
   cursor: pointer;
 }
 
+.video-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.video-layer.is-active-layer {
+  opacity: 1;
+  z-index: 2;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.video-layer.is-standby-layer {
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
 .monitor-empty {
   text-align: center;
   max-width: 440px;
@@ -627,6 +645,7 @@ body,
 .monitor-overlay {
   position: absolute;
   inset: 0;
+  z-index: 10;
   background-color: rgba(11, 11, 11, 0.85);
   display: flex;
   align-items: center;
@@ -674,6 +693,7 @@ body,
   bottom: 10px;
   left: 12px;
   right: 12px;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -801,17 +821,28 @@ body,
   color: #9e9e9e;
 }
 
+.timeline-zoom-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.zoom-readout-btn {
+  min-width: 42px;
+}
+
 /* Premiere Ruler + Track */
 .premiere-timeline {
   position: relative;
-  height: 76px;
-  margin: 0 12px 10px;
+  height: 92px;
+  margin: 0 12px 4px;
   background-color: #141414;
   border: 1px solid #2e2e2e;
   border-top: none;
   user-select: none;
   touch-action: none;
   cursor: pointer;
+  overflow: hidden;
 }
 
 .premiere-timeline.is-disabled {
@@ -859,25 +890,46 @@ body,
 
 .timeline-track {
   position: relative;
-  height: 50px;
+  height: 66px;
   background-color: #161616;
+  overflow: hidden;
 }
 
 .track-clip-bar {
   position: absolute;
-  top: 8px;
-  bottom: 8px;
+  top: 6px;
+  bottom: 6px;
   left: 0;
   right: 0;
-  background-color: #222222;
-  border-top: 1px solid #323232;
-  border-bottom: 1px solid #323232;
+  background-color: #1f2226;
+  border-top: 1px solid #32363c;
+  border-bottom: 1px solid #32363c;
+  overflow: hidden;
+}
+
+.waveform-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.waveform-loading-tag {
+  position: absolute;
+  right: 8px;
+  bottom: 4px;
+  font-size: 10px;
+  color: #8e9ba8;
+  background-color: rgba(18, 20, 24, 0.78);
+  padding: 1px 5px;
+  border-radius: 2px;
+  pointer-events: none;
 }
 
 .saved-edge-marker {
   position: absolute;
-  top: 6px;
-  bottom: 6px;
+  top: 5px;
+  bottom: 5px;
   width: 1px;
   background-color: #5a5a5a;
   pointer-events: none;
@@ -885,24 +937,24 @@ body,
 
 .loop-region {
   position: absolute;
-  top: 8px;
-  bottom: 8px;
-  background-color: rgba(255, 255, 255, 0.06);
+  top: 6px;
+  bottom: 6px;
+  background-color: rgba(255, 255, 255, 0.05);
   border-top: 2px solid #555555;
   border-bottom: 2px solid #555555;
   pointer-events: none;
 }
 
 .loop-region.is-active {
-  background-color: rgba(45, 140, 255, 0.22);
+  background-color: rgba(45, 140, 255, 0.14);
   border-top-color: #2d8cff;
   border-bottom-color: #2d8cff;
 }
 
 .bracket-handle {
   position: absolute;
-  top: 6px;
-  bottom: 6px;
+  top: 5px;
+  bottom: 5px;
   width: 12px;
   transform: translateX(-50%);
   background-color: #2a2a2a;
@@ -962,6 +1014,72 @@ body,
   height: calc(100% - 10px);
   margin: 0 auto;
   background-color: #2d8cff;
+}
+
+/* Slim Overview Scrollbar for Zoomed Timeline */
+.timeline-overview-bar {
+  position: relative;
+  height: 14px;
+  margin: 0 12px 10px;
+  background-color: #141414;
+  border: 1px solid #2b2b2b;
+  border-radius: 2px;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+  touch-action: none;
+}
+
+.timeline-overview-bar.is-idle {
+  cursor: default;
+}
+
+.timeline-overview-bar.is-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.timeline-overview-loop {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  background-color: rgba(140, 140, 140, 0.28);
+  pointer-events: none;
+}
+
+.timeline-overview-loop.is-active {
+  background-color: rgba(45, 140, 255, 0.38);
+}
+
+.timeline-overview-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: #5eaaff;
+  pointer-events: none;
+}
+
+.timeline-overview-thumb {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  background-color: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(180, 200, 220, 0.45);
+  border-radius: 2px;
+  cursor: grab;
+  pointer-events: none;
+}
+
+.timeline-overview-bar.is-idle .timeline-overview-thumb {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.timeline-overview-bar:not(.is-idle):active .timeline-overview-thumb {
+  cursor: grabbing;
+  background-color: rgba(45, 140, 255, 0.2);
+  border-color: #4da3ff;
 }
 
 /* Saved Named Loops Dock */

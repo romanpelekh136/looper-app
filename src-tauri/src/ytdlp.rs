@@ -159,6 +159,18 @@ pub fn extract_video_id_from_cache_filename(name: &str) -> Option<String> {
     }
 }
 
+pub fn extract_video_id_from_cache_artifact(name: &str) -> Option<String> {
+    if let Some(vid) = extract_video_id_from_cache_filename(name) {
+        return Some(vid);
+    }
+    let stem = name.strip_suffix("_waveform.json")?;
+    if is_valid_youtube_id(stem) {
+        Some(stem.to_string())
+    } else {
+        None
+    }
+}
+
 pub fn ytdlp_format_selector(quality: VideoQuality) -> String {
     let h = quality_max_height(quality);
     format!(
@@ -190,7 +202,7 @@ pub fn cache_dir(data_dir: &Path) -> PathBuf {
     data_dir.join("cache")
 }
 
-fn configure_hidden_command(cmd: &mut Command) {
+pub(crate) fn configure_hidden_command(cmd: &mut Command) {
     #[cfg(windows)]
     {
         const CREATE_NO_WINDOW: u32 = 0x0800_0000;
@@ -593,9 +605,10 @@ pub fn compute_cache_stats(
 
         let name = entry.file_name().to_string_lossy().into_owned();
         if let Some(vid) = extract_video_id_from_cache_filename(&name) {
-            let is_fav = favorite_ids.contains(&vid);
             id_set.insert(vid);
-            if is_fav {
+        }
+        if let Some(vid) = extract_video_id_from_cache_artifact(&name) {
+            if favorite_ids.contains(&vid) {
                 favorite_bytes = favorite_bytes.saturating_add(len);
             } else {
                 temp_bytes = temp_bytes.saturating_add(len);
@@ -632,7 +645,7 @@ pub fn clear_cache_dir(
             let name = entry.file_name().to_string_lossy().into_owned();
             let should_delete = match mode {
                 CacheClearMode::All => true,
-                CacheClearMode::TempOnly => match extract_video_id_from_cache_filename(&name) {
+                CacheClearMode::TempOnly => match extract_video_id_from_cache_artifact(&name) {
                     Some(vid) => !favorite_ids.contains(&vid),
                     None => true,
                 },
@@ -703,6 +716,18 @@ mod tests {
             extract_video_id_from_cache_filename("dQw4w9WgXcQ_720p.tmp.mp4"),
             None
         );
+        assert_eq!(
+            extract_video_id_from_cache_filename("dQw4w9WgXcQ_waveform.json"),
+            None
+        );
+        assert_eq!(
+            extract_video_id_from_cache_artifact("dQw4w9WgXcQ_waveform.json"),
+            Some("dQw4w9WgXcQ".to_string())
+        );
+        assert_eq!(
+            extract_video_id_from_cache_artifact("short_waveform.json"),
+            None
+        );
     }
 
     #[test]
@@ -735,31 +760,35 @@ mod tests {
         let temp_id = "tmpVideo456";
 
         std::fs::write(cdir.join(format!("{fav_id}_720p.mp4")), vec![1u8; 100]).unwrap();
+        std::fs::write(cdir.join(format!("{fav_id}_waveform.json")), vec![5u8; 40]).unwrap();
         std::fs::write(cdir.join(format!("{temp_id}_480p.mp4")), vec![2u8; 250]).unwrap();
+        std::fs::write(cdir.join(format!("{temp_id}_waveform.json")), vec![6u8; 30]).unwrap();
         std::fs::write(cdir.join(format!("{temp_id}_720p.tmp.mp4.part")), vec![3u8; 50]).unwrap();
 
         let favorites = HashSet::from([fav_id.to_string()]);
         let stats = compute_cache_stats(cdir, &favorites).unwrap();
-        assert_eq!(stats.total_bytes, 400);
-        assert_eq!(stats.file_count, 3);
-        assert_eq!(stats.favorite_bytes, 100);
-        assert_eq!(stats.temp_bytes, 300);
+        assert_eq!(stats.total_bytes, 470);
+        assert_eq!(stats.file_count, 5);
+        assert_eq!(stats.favorite_bytes, 140);
+        assert_eq!(stats.temp_bytes, 330);
         assert_eq!(
             stats.cached_video_ids,
             vec![fav_id.to_string(), temp_id.to_string()]
         );
 
         let after_temp = clear_cache_dir(cdir, &favorites, CacheClearMode::TempOnly).unwrap();
-        assert_eq!(after_temp.total_bytes, 100);
-        assert_eq!(after_temp.file_count, 1);
-        assert_eq!(after_temp.favorite_bytes, 100);
+        assert_eq!(after_temp.total_bytes, 140);
+        assert_eq!(after_temp.file_count, 2);
+        assert_eq!(after_temp.favorite_bytes, 140);
         assert_eq!(after_temp.temp_bytes, 0);
         assert_eq!(after_temp.cached_video_ids, vec![fav_id.to_string()]);
+        assert!(cdir.join(format!("{fav_id}_waveform.json")).is_file());
+        assert!(!cdir.join(format!("{temp_id}_waveform.json")).exists());
 
         // Add another quality for fav_id and delete only fav_id
         std::fs::write(cdir.join(format!("{fav_id}_1080p.mp4")), vec![4u8; 80]).unwrap();
         let removed = delete_cached_video_files(cdir, fav_id).unwrap();
-        assert_eq!(removed, 180);
+        assert_eq!(removed, 220);
 
         std::fs::write(cdir.join(format!("{fav_id}_720p.mp4")), vec![1u8; 100]).unwrap();
         let after_all = clear_cache_dir(cdir, &favorites, CacheClearMode::All).unwrap();

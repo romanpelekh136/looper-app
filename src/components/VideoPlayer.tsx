@@ -14,10 +14,14 @@ import {
   X,
 } from 'lucide-react';
 import { formatTime } from '../lib/time';
+import type { VideoSlot } from '../hooks/useAbLoop';
 import type { DownloadProgress, VideoMetadata, VideoQuality } from '../types';
 
 export interface VideoPlayerProps {
-  videoRef: RefObject<HTMLVideoElement>;
+  videoRefA: RefObject<HTMLVideoElement>;
+  videoRefB: RefObject<HTMLVideoElement>;
+  activeSlot: VideoSlot;
+  activeSlotRef: RefObject<VideoSlot>;
   metadata: VideoMetadata | null;
   streamUrl: string | null;
   quality: VideoQuality;
@@ -47,6 +51,7 @@ export interface VideoPlayerProps {
   onToggleMute: () => void;
   onCancelDownload: () => void;
   onLoadedMetadata: () => void;
+  onStandbyLoadedMetadata: () => void;
   onPlayStateChange: (playing: boolean) => void;
   onEnded: () => void;
 }
@@ -68,7 +73,10 @@ function stageLabel(stage?: string): string {
 }
 
 export function VideoPlayer({
-  videoRef,
+  videoRefA,
+  videoRefB,
+  activeSlot,
+  activeSlotRef,
   metadata,
   streamUrl,
   quality,
@@ -98,6 +106,7 @@ export function VideoPlayer({
   onToggleMute,
   onCancelDownload,
   onLoadedMetadata,
+  onStandbyLoadedMetadata,
   onPlayStateChange,
   onEnded,
 }: VideoPlayerProps) {
@@ -216,19 +225,63 @@ export function VideoPlayer({
 
       <div ref={stageRef} className="monitor-stage">
         {streamUrl ? (
-          <video
-            ref={videoRef}
-            src={streamUrl}
-            poster={metadata?.thumbnailUrl || undefined}
-            className="video-element"
-            playsInline
-            preload="auto"
-            onClick={onTogglePlay}
-            onLoadedMetadata={onLoadedMetadata}
-            onPlay={() => onPlayStateChange(true)}
-            onPause={() => onPlayStateChange(false)}
-            onEnded={onEnded}
-          />
+          <>
+            <video
+              ref={videoRefA}
+              src={streamUrl}
+              poster={metadata?.thumbnailUrl || undefined}
+              className={`video-element video-layer ${activeSlot === 'a' ? 'is-active-layer' : 'is-standby-layer'}`}
+              playsInline
+              preload="auto"
+              onClick={() => {
+                if (activeSlotRef.current === 'a') onTogglePlay();
+              }}
+              onLoadedMetadata={() => {
+                if (activeSlotRef.current === 'a') {
+                  onLoadedMetadata();
+                } else {
+                  onStandbyLoadedMetadata();
+                }
+              }}
+              onPlay={() => {
+                if (activeSlotRef.current === 'a') onPlayStateChange(true);
+              }}
+              onPause={() => {
+                if (activeSlotRef.current === 'a') onPlayStateChange(false);
+              }}
+              onEnded={() => {
+                if (activeSlotRef.current === 'a') onEnded();
+              }}
+            />
+            <video
+              ref={videoRefB}
+              src={streamUrl}
+              poster={metadata?.thumbnailUrl || undefined}
+              className={`video-element video-layer ${activeSlot === 'b' ? 'is-active-layer' : 'is-standby-layer'}`}
+              playsInline
+              preload="auto"
+              muted
+              onClick={() => {
+                if (activeSlotRef.current === 'b') onTogglePlay();
+              }}
+              onLoadedMetadata={() => {
+                if (activeSlotRef.current === 'b') {
+                  onLoadedMetadata();
+                } else {
+                  onStandbyLoadedMetadata();
+                }
+              }}
+              onPlay={() => {
+                if (activeSlotRef.current === 'b') onPlayStateChange(true);
+              }}
+              onPause={() => {
+                if (activeSlotRef.current === 'b') onPlayStateChange(false);
+              }}
+              onEnded={() => {
+                if (activeSlotRef.current === 'b') onEnded();
+              }}
+            />
+          </>
         ) : (
           <div className="monitor-empty">
             <Music2 size={28} className="monitor-empty-icon" />

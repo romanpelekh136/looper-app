@@ -6,13 +6,14 @@ import { LoopsPanel } from './components/LoopsPanel';
 import { MetronomeControls } from './components/MetronomeControls';
 import { SettingsModal } from './components/SettingsModal';
 import { VideoPlayer } from './components/VideoPlayer';
-import { useAbLoop } from './hooks/useAbLoop';
+import { useAbLoop, type VideoSlot } from './hooks/useAbLoop';
 import { useLibrary } from './hooks/useLibrary';
 import { useMetronome } from './hooks/useMetronome';
 import {
   cancelDownload,
   fetchVideoMetadata,
   getAppInfo,
+  getVideoWaveform,
   isTauriRuntime,
   loadSettings,
   onDownloadProgress,
@@ -34,6 +35,7 @@ import {
   type Song,
   type VideoMetadata,
   type VideoQuality,
+  type WaveformData,
 } from './types';
 
 const TEXT_INPUT_TYPES = new Set([
@@ -59,10 +61,13 @@ function isEditableElement(target: EventTarget | null): boolean {
 }
 
 export function App() {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRefA = useRef<HTMLVideoElement>(null);
+  const videoRefB = useRef<HTMLVideoElement>(null);
+  const activeSlotRef = useRef<VideoSlot>('a');
   const pendingSeekRef = useRef<number | null>(null);
   const pendingBoundsRef = useRef<LoopBounds | null>(null);
   const activeVideoIdRef = useRef<string | null>(null);
+  const waveformReqIdRef = useRef(0);
   const settingsLoadedRef = useRef(false);
 
   const [inTauri] = useState(() => isTauriRuntime());
@@ -72,10 +77,14 @@ export function App() {
   const [urlInput, setUrlInput] = useState('');
   const [metadata, setMetadata] = useState<VideoMetadata | null>(null);
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  const [activeSlot, setActiveSlot] = useState<VideoSlot>('a');
   const [loadedQuality, setLoadedQuality] = useState<VideoQuality>(
     DEFAULT_SETTINGS.videoQuality,
   );
   const [cached, setCached] = useState(false);
+  const [waveform, setWaveform] = useState<WaveformData | null>(null);
+  const [isWaveformLoading, setIsWaveformLoading] = useState(false);
+  const [focusRangeSeq, setFocusRangeSeq] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState<DownloadProgress | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -172,19 +181,25 @@ export function App() {
     return () => window.clearTimeout(timer);
   }, [volume, inTauri]);
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.volume = isMuted ? 0 : volume;
-    video.muted = isMuted;
-  }, [volume, isMuted, streamUrl]);
-
-  const { jumpToA, seekTo } = useAbLoop({
-    videoRef,
+  const {
+    jumpToA,
+    seekTo,
+    togglePlay: handleTogglePlay,
+    pauseAll,
+    cueStandbyNow,
+  } = useAbLoop({
+    videoRefA,
+    videoRefB,
+    activeSlot,
+    activeSlotRef,
+    onActiveSlotChange: setActiveSlot,
+    streamUrl,
     bounds,
     durationSec,
     loopEnabled,
     playbackRate,
+    volume,
+    isMuted,
     onTimeUpdate: setCurrentTime,
   });
 
@@ -193,23 +208,6 @@ export function App() {
     bpm: metroBpm,
     volume: metroVolume,
   });
-
-  const handleTogglePlay = useCallback(() => {
-    const video = videoRef.current;
-    if (!video || !streamUrl) return;
-    if (video.paused) {
-      if (
-        loopEnabled &&
-        durationSec > 0 &&
-        (video.currentTime >= bounds.endSec || video.currentTime < bounds.startSec)
-      ) {
-        video.currentTime = bounds.startSec;
-      }
-      void video.play().catch(() => {});
-    } else {
-      video.pause();
-    }
-  }, [streamUrl, loopEnabled, durationSec, bounds]);
 
   // Only Space (Play/Pause) hotkey in window focus, disabled while modals are open
   useEffect(() => {
@@ -240,6 +238,33 @@ export function App() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [deleteTarget]);
+
+  const loadWaveformForVideo = useCallback(
+    async (videoId: string, quality: VideoQuality) => {
+      const reqId = ++waveformReqIdRef.current;
+      setWaveform(null);
+      if (!inTauri) {
+        setIsWaveformLoading(false);
+        return;
+      }
+      setIsWaveformLoading(true);
+      try {
+        const data = await getVideoWaveform(videoId, quality);
+        if (reqId === waveformReqIdRef.current) {
+          setWaveform(data);
+        }
+      } catch {
+        if (reqId === waveformReqIdRef.current) {
+          setWaveform(null);
+        }
+      } finally {
+        if (reqId === waveformReqIdRef.current) {
+          setIsWaveformLoading(false);
+        }
+      }
+    },
+    [inTauri],
+  );
 
   const loadPreparedVideo = async (
     meta: VideoMetadata,
@@ -286,11 +311,16 @@ export function App() {
       setLoopEnabled(false);
       setActiveLoopId(null);
       setIsPlaying(false);
+      pauseAll();
+
+      void loadWaveformForVideo(meta.youtubeId, settings.videoQuality);
 
       if (prepared.streamUrl === streamUrl) {
         seekTo(clampedStart);
         pendingSeekRef.current = null;
       } else {
+        activeSlotRef.current = 'a';
+        setActiveSlot('a');
         setStreamUrl(prepared.streamUrl);
         setCurrentTime(clampedStart);
       }
@@ -403,7 +433,8 @@ export function App() {
   };
 
   const handleLoadedMetadata = () => {
-    const video = videoRef.current;
+    const video =
+      activeSlotRef.current === 'a' ? videoRefA.current : videoRefB.current;
     if (!video) return;
     const realDuration =
       Number.isFinite(video.duration) && video.duration > 0
@@ -472,6 +503,7 @@ export function App() {
     setBounds(normalized);
     setActiveLoopId(loop.id);
     setLoopEnabled(true);
+    setFocusRangeSeq((n) => n + 1);
     seekTo(normalized.startSec);
   };
 
@@ -689,7 +721,10 @@ export function App() {
 
         <main className="editor-workspace">
           <VideoPlayer
-            videoRef={videoRef}
+            videoRefA={videoRefA}
+            videoRefB={videoRefB}
+            activeSlot={activeSlot}
+            activeSlotRef={activeSlotRef}
             metadata={metadata}
             streamUrl={streamUrl}
             quality={loadedQuality}
@@ -722,6 +757,7 @@ export function App() {
             onToggleMute={() => setIsMuted((m) => !m)}
             onCancelDownload={handleCancelDownload}
             onLoadedMetadata={handleLoadedMetadata}
+            onStandbyLoadedMetadata={cueStandbyNow}
             onPlayStateChange={setIsPlaying}
             onEnded={() => setIsPlaying(false)}
           />
@@ -733,6 +769,10 @@ export function App() {
             loopEnabled={loopEnabled}
             disabled={!streamUrl || durationSec <= 0}
             savedLoopEdges={savedLoopEdges}
+            waveform={waveform}
+            isWaveformLoading={isWaveformLoading}
+            videoKey={metadata?.youtubeId ?? null}
+            focusRangeSeq={focusRangeSeq}
             onBoundsChange={setBounds}
             onResetBounds={handleResetBounds}
             onSeek={seekTo}

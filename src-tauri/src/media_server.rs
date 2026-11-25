@@ -286,7 +286,7 @@ async fn handle_connection(
          Accept-Ranges: bytes\r\n\
          {content_range_header}\
          Content-Length: {chunk_len}\r\n\
-         Cache-Control: no-store\r\n\
+         Cache-Control: private, max-age=3600\r\n\
          Access-Control-Allow-Origin: *\r\n\
          Connection: close\r\n\r\n"
     );
@@ -417,6 +417,7 @@ mod tests {
         .await;
         assert!(headers.starts_with("HTTP/1.1 200 OK"));
         assert!(headers.contains("Accept-Ranges: bytes"));
+        assert!(headers.contains("Cache-Control: private, max-age=3600"));
         assert!(headers.contains("Content-Length: 1024"));
         assert_eq!(body, payload);
 

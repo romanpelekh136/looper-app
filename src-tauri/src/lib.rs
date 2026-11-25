@@ -1,5 +1,6 @@
 pub mod media_server;
 pub mod storage;
+pub mod waveform;
 pub mod ytdlp;
 
 use media_server::MediaServer;
@@ -10,6 +11,7 @@ use std::sync::Arc;
 use storage::{AppSettings, ImportLibraryResult, ImportMode, LibraryData, VideoQuality};
 use tauri::{AppHandle, Manager, State};
 use tokio::sync::Mutex;
+use waveform::WaveformData;
 use ytdlp::{
     BinariesStatus, CacheClearMode, CacheStats, DownloadManager, PrepareVideoResult,
     VideoMetadata,
@@ -163,6 +165,17 @@ async fn delete_cached_video(video_id: String) -> Result<u64, String> {
     ytdlp::delete_cached_video_files(&cdir, &video_id).map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+async fn get_video_waveform(
+    video_id: String,
+    quality: VideoQuality,
+) -> Result<Option<WaveformData>, String> {
+    let data_dir = storage::app_data_dir().map_err(|e| e.to_string())?;
+    waveform::generate_or_load_waveform(&data_dir, &video_id, quality)
+        .await
+        .map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default().plugin(tauri_plugin_dialog::init());
@@ -197,7 +210,8 @@ pub fn run() {
             cancel_download,
             get_cache_stats,
             clear_cache,
-            delete_cached_video
+            delete_cached_video,
+            get_video_waveform
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
