@@ -55,9 +55,12 @@ jobs:
             Desktop guitar practice looper for YouTube videos.
 
             ### Highlights
+            - Premiere-style audio waveform integrated directly inside the A-B timeline track (Peak + RMS, cached locally)
+            - Zero-delay A-B looping (`B -> A`) using dual-video pre-cued ping-pong and HTTP RAM caching
+            - Timeline zoom (`Ctrl + Mouse Wheel`) anchored to cursor, smooth panning, sub-second ruler ticks (`0.1s`), and overview pan bar
             - YouTube download & offline MP4 (H.264/AAC) cache (`480p` / `720p` / `1080p`) via `yt-dlp` + `ffmpeg`
-            - Embedded local HTTP `206 Partial Content` server for instant, seamless `B -> A` looping
-            - Premiere-style magnetic timeline (`0.1s` precision, `±0.1s` / `±0.5s` nudges, manual timecode input)
+            - Embedded local HTTP `206 Partial Content` server for responsive range seeking
+            - Magnetic snapping timeline (`0.1s` precision, `±0.1s` / `±0.5s` nudges, manual timecode input)
             - Pitch-preserving playback speed (`0.25x`–`2.00x`) and built-in Web Audio metronome
             - Favorites library with search, multiple named loops per song, and JSON Export / Import backup
 

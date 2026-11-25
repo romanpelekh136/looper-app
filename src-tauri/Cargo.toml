@@ -1,6 +1,6 @@
 [package]
 name = "guitar-youtube-looper"
-version = "0.1.0"
+version = "0.2.0"
 description = "Desktop guitar practice looper for YouTube videos"
 authors = ["Guitar Looper"]
 edition = "2021"
